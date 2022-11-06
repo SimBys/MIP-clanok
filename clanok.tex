@@ -1,5 +1,3 @@
-% Metódy inžinierskej práce
-
 \documentclass[10pt,twoside,slovak,a4paper]{article}
 
 \usepackage[slovak]{babel}
@@ -9,21 +7,20 @@
 \usepackage{graphicx}
 \usepackage{url} % príkaz \url na formátovanie URL
 \usepackage{hyperref} % odkazy v texte budú aktívne (pri niektorých triedach dokumentov spôsobuje posun textu)
-
 \usepackage{cite}
-%\usepackage{times}
+
 
 \pagestyle{headings}
 
-\title{Bežné metódy optimalizácie mobilných hier\thanks{Semestrálny projekt v predmete Metódy inžinierskej práce, ak. rok 2015/16, vedenie: Meno Priezvisko}} % meno a priezvisko vyučujúceho na cvičeniach
+\title{Metódy optimalizácie mobilných hier\thanks{Semestrálny projekt v predmete Metódy inžinierskej práce, ak. rok 2022/23, vedenie: MSc. Mirwais Ahmadzai}}
 
 \author{Šimon Bystrický\\[2pt]
 	{\small Slovenská technická univerzita v Bratislave}\\
 	{\small Fakulta informatiky a informačných technológií}\\
-	{\small \texttt{...@stuba.sk}}
+	{\small \texttt{xbystricky@stuba.sk}}
 	}
 
-\date{\small 4. október 2022} % upravte
+\date{\small 6. november 2022}
 
 
 
@@ -32,93 +29,63 @@
 \maketitle
 
 \begin{abstract}
-\ldots
+Hráčske nadšenie z digitálnej hry môže veľmi rýchlo pokaziť „sekanie” hry. Preto je potrebné analyzovať faktory spôsobujúce nadmernú vyťaženosť procesora, grafickej karty a prílišné využitie operačnej pamäte, od ktorých záleží plynulosť hier.
+Obsahom tohto článku sú rôzne spôsoby optimalizácie hier určených pre mobilné zariadenia. Dôležitosť optimalizácie je vysvetlená v Úvode \ref{uvod} a základy optimalizácie v Základných pojmoch \ref{pojmy}. Najskôr je vyjasnený spôsob zistenia výkonnostných problémov v sekcií Profiler, ako profilovať \ref{profiler} Ďalej sú objasnené niektoré z mnohých metód optimalizácie mobilných hier \ref{sposoby}. Väčšina, ak nie všetky, tieto spôsoby sú uplatniteľé vo všetkých populárnych herných
+enginoch a pre všetky herné platformy. Pre účely tohto článku je použitý Unity engine \cite{Unity}, z ktorého sú tvorené štatistiky účinnosti jednotlivých optimalizačných spôsbov.
 \end{abstract}
 
 
 
 \section{Úvod}
 
-Motivujte čitateľa a vysvetlite, o čom píšete. Úvod sa väčšinou nedelí na časti.
+Digitálne hry sú čoraz viac populárne, denne vzniká mnoho hier s ohromujúcou grafikou, efektami, preto ak keď chce vývojár alebo vývojárska spoločnosť umožniť plynulé hranie čo najväčšiemu množstvu konzumentov ich obsahu,
+musia brať optimalizáciu seriózne. S nasledujúcimi spôsobmi optimalizácie hier určených pre mobilné zariadenia sa pokúsime
+dosiahnuť plynulú hernú skúsenosť, pričom čo najviac zachováme pôvodnú kvalitu hry.
+Výkon mobilných zariadení zvykne byť najnižší v porovnaní s počítačmi a hernými konzolami, ale napriek tomu mobilné hry sú ziskovejšie ako hry pre tieto platformy \cite{venturebeat-revenue}.
+Otázka optimalizácie je pomerne častá medzi vývojármi digitálnych hier. Je to hlavne z toho dôvodu, že nie je vôbec ťažké
+zaťažiť aj výkonný počítač väčším množstvom zle optimalizovaných, alebo neoptimalizovaných objektov, nehovoriac o výrazne obmedzenom výkone a veľkosti RAM mobilných zeriadení.
+Je úplne normálne chcieť mať čo najviac pohibujúcich sa objektov, sveteľných zdrojov, ohromujúcich vizuálnych efektov a zároveň chcieť aby hra bežala plynulo.
 
-Uveďte explicitne štruktúru článku. Tu je nejaký príklad.
-Základný problém, ktorý bol naznačený v úvode, je podrobnejšie vysvetlený v časti~\ref{nejaka}.
-Dôležité súvislosti sú uvedené v častiach~\ref{dolezita} a~\ref{dolezitejsia}.
-Záverečné poznámky prináša časť~\ref{zaver}.
-
-
-
-\section{Nejaká časť} \label{nejaka}
-
-Z obr.~\ref{f:rozhod} je všetko jasné. 
-
-\begin{figure*}[tbh]
-\centering
-%\includegraphics[scale=1.0]{diagram.pdf}
-Aj text môže byť prezentovaný ako obrázok. Stane sa z neho označný plávajúci objekt. Po vytvorení diagramu zrušte znak \texttt{\%} pred príkazom \verb|\includegraphics| označte tento riadok ako komentár (tiež pomocou znaku \texttt{\%}).
-\caption{Rozhodujúci argument.}
-\label{f:rozhod}
-\end{figure*}
+Hry nie je nutné vyvíjať tak, že budeme od úplného začiatku optimalizovať každú jednu vec, ktorá sa dá, ale zase naopak, nie vždy sa dajú hry poriadne optimalizovať, ak už je veľká časť hry hotová, bez toho, aby sme museli kompletne prerobiť to čo už máme.
+Optimalizáciu treba mať na pamäti vždy, ale nie vždy je vhodné míňať čas a prostriedky na optimalizáciu niečoho, čo sa môže časom úplne zmeniť.
 
 
+\section{Základné pojmy} \label{pojmy}
 
-\section{Iná časť} \label{ina}
+Na začiatok je vhodné vysvetliť zopár pojmov, ktoré sa týkajú optimalizácie nie len mobilných hier.
+Na zistenie najnáročnejších vecí v našej hre sa používa softvér na analýzu výkonu procesora, grafickej karty, pamäte,
+ale taktiež aj na analýzu ako veľmi spomaľuje vykreslenie snímku osvetlenie, tiene, alebo aj náročnosť zvuku na výkon hry (angl. profiler, ďalej len „profiler”).
+\label{shadre}Pri vyvíjaní hier sa často pracuje so \emph{shadermi}, čo sú programy pre grafické karty, ktorými vieme zmeniť zobrazenie objektov bez toho aby sme museli zmeniť ich 3D model.
+Na označenie plynulosti hry, filmu, animácie... sa používa FPS (angl. frames per second = snímky za sekundu).
+V súčasnosti je štandard aby hra zobrazovala 60 a viac snímkov za sekundu, čo znamená, že každá snímka sa musí vykresliť za menej ako 16,67 ms.
 
-Základným problémom je teda\ldots{} Najprv sa pozrieme na nejaké vysvetlenie (časť~\ref{ina:nejake}), a potom na ešte nejaké (časť~\ref{ina:nejake}).\footnote{Niekedy môžete potrebovať aj poznámku pod čiarou.}
-
-Môže sa zdať, že problém vlastne nejestvuje\cite{Coplien:MPD}, ale bolo dokázané, že to tak nie je~\cite{Czarnecki:Staged, Czarnecki:Progress}. Napriek tomu, aj dnes na webe narazíme na všelijaké pochybné názory\cite{PLP-Framework}. Dôležité veci možno \emph{zdôrazniť kurzívou}.
-
-
-\subsection{Nejaké vysvetlenie} \label{ina:nejake}
-
-Niekedy treba uviesť zoznam:
-
-\begin{itemize}
-\item jedna vec
-\item druhá vec
-	\begin{itemize}
-	\item x
-	\item y
-	\end{itemize}
-\end{itemize}
-
-Ten istý zoznam, len číslovaný:
-
-\begin{enumerate}
-\item jedna vec
-\item druhá vec
-	\begin{enumerate}
-	\item x
-	\item y
-	\end{enumerate}
-\end{enumerate}
+\section {profiler, ako profilovať} \label{profiler}
+Expert na optimalizáciu hier, Ian Dundore, povedal, že nemáme riešiť problémy, ktoré nemáme \cite{unity-talk-optimization}, čo súvisí s tým, že by sme mali vždy najprv profilovať, až potom hľadať riešenie.
+\ldots
 
 
-\subsection{Ešte nejaké vysvetlenie} \label{ina:este}
+\section{Spôsoby optimalizácie} \label{sposoby}
+Treba poznamenať, že účinnosť týchto spôsobov optimalizácie mobilných hier sa môže líšiť pri rôznych zariadeniach a rôznych hrách. Čím je hra pomalšia (čím dlhšie trvá vykreslenie jednotlivých snímkov), tým je potenciál účinnosti optimalizácie vyšší.
 
-\paragraph{Veľmi dôležitá poznámka.}
-Niekedy je potrebné nadpisom označiť odsek. Text pokračuje hneď za nadpisom.
+\subsection{Zníženie počtu trojuholníkov 3D objektov}
+Digitálne 3D objekty sú zvyčajne tvorené trojuholníkmi, ktoré vedia grafické karty zobraziť na obrazovku \cite{polygons}. Keď máme veľa objektov, ktoré nie sú hranaté, ale oblé, potrebujú pre dôveryhodné zobrazenie omnoho viac trojuholníkov. Veľa trojuholníkov na zobrazenie môže zaťažiť grafickú kartu. Jedno z riešení je používať pri modelovaní objektov čo najjednoduchšie tvary a doplniť detaily textúrami a shadermi \ref{shadre} \cite{Koulaxidis-BOT}. Pomocou voľne šíriteľného programu Blender \cite{Blender} sa dá zmenšiť počet trojuholníkov objektov, ale výsledný objekt môže vyzerať ináč ako pôvodný a nemusí byť až tak optimalizovaný počet trojuholníkov touto metódou, ako keby sa vytvoril od začiatku s cieľom čo nejmenšieho počtu trojuholníkov \cite{Koulaxidis-BOT}. 
 
 
 
-\section{Dôležitá časť} \label{dolezita}
+\subsection{Object pooling}
+Object pooling je spôsob opätovného používania objektov, bez alokácie pamäte pre nové objekty. Tento systém je vhodné využívať pri rovnakých alebo podobných objektov ktoré často ničia a vytvárajú nové. Myšlienka tohto systému je pomerne jednoduchá - keď už nejaký obejkt nie je potrebný, tak sa neodstráni z pamäte, ale iba schová a keď bude znova potrebný tak sa iba zviditeľní bez dealokácie starej a alokácie novej pamäte. Časté využitie pri „recyklácií” nepriateľov, kde nejakí zanikajú a vznikajú noví sa dajú používať tie isté objekty, čo môže výrazne znížiť vyťaženie pamäte, čiže zlepšiť výkon a plynulosť hry \cite{AversaAndDickinson:UGO}.
+
+\subsection{Batches}
+\ldots
+
+\section{Záver}
+\ldots
 
 
 
-
-\section{Ešte dôležitejšia časť} \label{dolezitejsia}
-
-
-
-
-\section{Záver} \label{zaver} % prípadne iný variant názvu
-
-
-
-%\acknowledgement{Ak niekomu chcete poďakovať\ldots}
-
-
-% týmto sa generuje zoznam literatúry z obsahu súboru literatura.bib podľa toho, na čo sa v článku odkazujete
 \bibliography{literatura}
 \bibliographystyle{plain} % prípadne alpha, abbrv alebo hociktorý iný
+
+%Súvisiace práce (Related Work),prípadne Diskusia ?
+
 \end{document}
